@@ -24,6 +24,8 @@
 	function _init(options) {
 
 		var opts = $.extend(true, {}, $.fn.mcjsw.defaults, options);
+    
+    
 		return this.each(function() {
 			var $that = $(this)
 				,o = $.extend(true, {}, opts, $that.data(opts.datasetKey));
@@ -34,6 +36,7 @@
 				language : '',
 				LANG : '',
 				location : '',
+				unit : '',
 				cloudy : '',
 				mist : '',
 				clear : '',
@@ -45,11 +48,16 @@
 				tempIndicator  : '&#8451;',
 				error  : '' 
 			});
-			
+			o.unit = o.language === 'nl'?'celsius':'fahrenheit';
+      
 			// use extend(), so no o is used by value, not by reference
 			$.data(this, ns, $.extend(true, {}, o));
-	
-			_currentweather(o, $(this))
+			_currentweather(o, $(this));
+      
+			$('.current').click( function(){
+				o.unit = o.unit==='celsius'?'fahrenheit':'celsius';
+				_currentweather(o, $that);
+			});
 			
 		});
 	}
@@ -100,10 +108,11 @@
 								var weathertype = parsed_json['current_observation']['weather'];
 								var weathericon = parsed_json['current_observation']['icon_url'];
 								
-								if (o.language === 'nl'){
+								if (o.unit == 'celsius'){
 									var feelslike_c = parsed_json['current_observation']['feelslike_c'];
 									var temp_c = parsed_json['current_observation']['temp_c'];
-								}else if (o.language === 'en'){
+									o.tempIndicator  = 'C' 
+								}else /*if (o.unit === 'fahrenheit')*/{
 									var feelslike_c = parsed_json['current_observation']['feelslike_f'];
 									var temp_c = parsed_json['current_observation']['temp_f'];
 									o.tempIndicator  = '&#8457;' 
@@ -154,10 +163,10 @@
 									var weekday = day.date.weekday							
 									var conditions = day.conditions
 									
-									if (o.language === 'nl'){
+									if (o.unit === 'celsius'){
 										var mintemp = day.low.celsius	
 										var maxtemp = day.high.celsius
-									}else if (o.language === 'en'){
+									}else if (o.unit === 'fahrenheit'){
 										var mintemp = day.low.fahrenheit	
 										var maxtemp = day.high.fahrenheit
 									}
