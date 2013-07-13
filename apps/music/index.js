@@ -10,8 +10,8 @@ var express = require('express')
 , Encoder = require('node-html-encoder').Encoder
 , colors = require('colors')
 , Lame = require('lame')
-, scan = require('../../lib/scan.js')
-, Speaker = require('speaker');
+, Speaker = require('speaker')
+, mediascanner = require('./mediascanner');
 
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/mediacenterjs');
@@ -20,7 +20,7 @@ var db = require('./mongoose/model.js')('music');
 
 //var speaker = new Speaker();
 //var lameDecoder = new Lame.Decoder;
-
+var scanner = new mediascanner();
 
 // entity type encoder
 var encoder = new Encoder('entity');
@@ -35,30 +35,6 @@ var configfile = []
 // Choose your render engine. The default choice is JADE:  http://jade-lang.com/
 exports.engine = 'jade';
 
-//this dedicated background operation scan music folder
-// --> @TODO a lot of optimization!!
-function handleNewMusics(){
-  if( configfileResults.musicpath ) {
-    scan( configfileResults.musicpath, 
-                            new RegExp("\.(mp3)","g"), 
-                            function(error, items){
-        if(items.length>0){
-          //console.log('Found %d new files.', items.length);
-          items.forEach( function(file){
-            var item = {title: file.file};
-            item.href = file.href.substr( configfileResults.musicpath.length );
-            var doc = new db(item);
-            doc.save(); //this will fail, if it not exists already because href is unique
-          });
-        }
-        //reload folder
-        setTimeout( function() { handleNewMusics(); }, 5000);
-    });
-  }
-}
-setTimeout( function() {
-  handleNewMusics();
-}, 500);
 // Render the indexpage
 exports.index = function(req, res, next){	
 	var dir = configfileResults.musicpath
