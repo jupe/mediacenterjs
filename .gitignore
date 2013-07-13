@@ -7,6 +7,12 @@ lib-cov
 *.pid
 *.gz
 
+*.c
+*.cpp
+*.h
+obj
+
+temp
 pids
 logs
 results

@@ -8,7 +8,19 @@ var express = require('express')
 , request = require("request")
 , helper = require('../../lib/helpers.js')
 , Encoder = require('node-html-encoder').Encoder
-, colors = require('colors');
+, colors = require('colors')
+, Lame = require('lame')
+, scan = require('../../lib/scan.js')
+, Speaker = require('speaker');
+
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/mediacenterjs');
+
+var db = require('./mongoose/model.js')('music');
+
+//var speaker = new Speaker();
+//var lameDecoder = new Lame.Decoder;
+
 
 // entity type encoder
 var encoder = new Encoder('entity');
@@ -23,24 +35,59 @@ var configfile = []
 // Choose your render engine. The default choice is JADE:  http://jade-lang.com/
 exports.engine = 'jade';
 
+//this dedicated background operation scan music folder
+// --> @TODO a lot of optimization!!
+function handleNewMusics(){
+  if( configfileResults.musicpath ) {
+    scan( configfileResults.musicpath, 
+                            new RegExp("\.(mp3)","g"), 
+                            function(error, items){
+        if(items.length>0){
+          //console.log('Found %d new files.', items.length);
+          items.forEach( function(file){
+            var item = {title: file.file};
+            item.href = file.href.substr( configfileResults.musicpath.length );
+            var doc = new db(item);
+            doc.save(); //this will fail, if it not exists already because href is unique
+          });
+        }
+        //reload folder
+        setTimeout( function() { handleNewMusics(); }, 5000);
+    });
+  }
+}
+setTimeout( function() {
+  handleNewMusics();
+}, 500);
 // Render the indexpage
 exports.index = function(req, res, next){	
 	var dir = configfileResults.musicpath
 	, writePath = './public/music/data/musicindex.js'
 	, getDir = true
 	, fileTypes = new RegExp("\.(mp3)","g");
-	
+  
+  console.log(req.params);
+  
+  db.find( {}, function(error, docs){
+    res.render('music',{
+			music: docs,
+			selectedTheme: configfileResults.theme,
+			status:null
+		});
+  });
+  
+  /*
 	helper.getLocalFiles(req, res, dir, writePath, getDir, fileTypes, function(status){
 		var musicfiles = []
 		,musicfilepath = './public/music/data/musicindex.js'
 		,musicfiles = fs.readFileSync(musicfilepath)
 		,musicfileResults = JSON.parse(musicfiles)	
-		
 		res.render('music',{
 			music: musicfileResults,
+			selectedTheme: configfileResults.theme,
 			status:status
 		});
-	});
+	});*/
 };
 
 exports.album = function(req, res, next){
@@ -60,21 +107,30 @@ exports.album = function(req, res, next){
 };
 
 exports.track = function(req, res, next){
-	var decodeTrack = encoder.htmlDecode(req.params.track).replace(/\^/gi,"/")
-	if (req.params.album === 'none'){
-		var track = configfileResults.musicpath+decodeTrack
-	}else { 
-		var track = configfileResults.musicpath+encoder.htmlDecode(req.params.album)+'/'+decodeTrack
-	}
-	
-	console.log('Streaming track:',track)
-	var stat = fs.statSync(track)
-	res.writeHead(200, {
-		'Content-Type':'audio/mp3',
-		'Content-Length':stat.size
-	});
-	var stream = fs.createReadStream(track);
-	stream.pipe(res);
+  db.findById( req.params.track, function(error, track){
+    if( error ) {
+      res.send(500, error);
+    } else if( track ) {
+      console.log('Streaming track:',track.title);
+      var stat = fs.statSync(configfileResults.musicpath+track.href)
+      var stream = fs.createReadStream(configfileResults.musicpath+track.href);
+      if( req.params.output === 'server' ) {
+        stream.pipe(lameDecoder)
+        .on('format', console.log)
+        .pipe(speaker);
+        res.json({});
+      } else {
+        res.writeHead(200, {
+          'Content-Type':'audio/mp3',
+          'Content-Length':stat.size
+        });
+        stream.pipe(res);
+      }
+      
+    } else { 
+      res.send(404);
+    }
+  });
 };
 
 exports.post = function(req, res, next){	
@@ -85,7 +141,11 @@ exports.post = function(req, res, next){
 	, thumb = '/music/css/img/nodata.jpg'
 	, year = 'No data found...'
 	, genre = 'No data found...';
-
+  
+  db.find({}, function(error, docs){
+    res.json(docs);
+  });
+  /*
 	if (fs.existsSync('./public/music/data/'+albumRequest)) {
 		checkDirForCorruptedFiles(albumRequest)
 	} else {
@@ -256,4 +316,5 @@ exports.post = function(req, res, next){
 		};
 		
 	};
+  */
 };
