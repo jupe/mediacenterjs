@@ -19,8 +19,36 @@
 
 	var ns = 'mcjsm';
 	var methods = {};
+  
 
 	function _init(options) {
+  
+  
+    /*
+     In future this slick grid library might be very usefull, 
+     especially when large music collection is used.
+     
+     @TODO
+       -ajax table fill
+       -remote model  (e.g. https://github.com/mleibman/SlickGrid/blob/master/slick.remotemodel.js)
+       
+    */
+    /*
+    var grid;
+    var columns = [
+      {id: "artist", name: "Artist", field: "artist"},
+      {id: "album", name: "Album", field: "album"},
+      {id: "title", name: "Title", field: "title"},
+      {id: "duration", name: "Duration", field: "duration"},
+      //{id: "%", name: "% Complete", field: "percentComplete"},
+    ];
+    var options = {
+      enableCellNavigation: true,
+      enableColumnReorder: false
+    };
+    grid = new Slick.Grid("#musicGrid", [], columns, options);
+    */
+  
 		var opts = $.extend(true, {}, $.fn.mcjsm.defaults, options);
 		return this.each(function() {
 			var $that = $(this);

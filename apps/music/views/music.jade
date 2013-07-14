@@ -5,9 +5,15 @@ html(lang="en")
 		
 		// Core inclusion
 		link(rel='stylesheet', href='/core/css/style.css')
+		
 		script(src="/core/js/jquery-1.8.2.min.js")
 		script(src="/core/js/plugins/jquery.idle-timer.js")
 		script(src="/core/js/jquery.mcjs.core.js")
+    
+		link(rel='stylesheet', href='/core/js/slick.grid/slick.grid.css')
+		script(src="/core/js/slick.grid/lib/jquery.event.drag-2.2.js")
+		script(src="/core/js/slick.grid/slick.core.js")
+		script(src="/core/js/slick.grid/slick.grid.js")
 		
 		link(href="http://vjs.zencdn.net/4.0/video-js.css", rel="stylesheet")
 		script(src="http://vjs.zencdn.net/4.0/video.js")
@@ -41,6 +47,7 @@ html(lang="en")
 				if status !== null
 					p.gui= status
 				else
+					div(id="musicGrid", style="width:600px;height:500px;")
 					ul.music
 						each item in music
 							li

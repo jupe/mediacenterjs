@@ -14,7 +14,7 @@ var MusicSchema = function(){
     year: {type: Number},
     ranking: {type: Number, min: 0, max: 5},
     fileSize: {type: Number, min: 0},
-    musicLength: {type: Number, min: 0}, //seconds
+    duration: {type: Number, min: 0}, //seconds
     
     created_at: {type: Date, default: Date.now},
     
