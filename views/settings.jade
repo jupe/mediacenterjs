@@ -28,7 +28,7 @@ html(lang="en")
 		#header.settings
 			a.backlink(href="/") 
 				img(src="/core/icons/back.png")
-			h1  #{lingua.settings}		
+			h1  #{lingua.settings}
 		#wrapper
 			#settings
 				form#setup.validate-form(action='/submit',method='post')
@@ -86,6 +86,9 @@ html(lang="en")
 					.row
 						label #{lingua.setting_location}
 						input.keyboard(name="location",type="text",placeholder="ie london or amsterdam", value= location,data-rule-required="true")
+					.row
+						label #{lingua.setting_database}
+						input.keyboard(name="database",type="text",placeholder="localhost", value=database,data-rule-required="true")
 					.row
 						label #{lingua.setting_port}
 						input.keyboard(name="port",type="text",placeholder="ie 3000 or 1337", value= port ,data-rule-required="true")

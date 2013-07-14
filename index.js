@@ -116,6 +116,7 @@ app.get("/settings", function(req, res, next) {
 		tvpath : configfileResults.tvpath,
 		highres: configfileResults.highres,
 		language: configfileResults.language,
+		database: configfileResults.database,
 		onscreenkeyboard: configfileResults.onscreenkeyboard,
 		location: configfileResults.location,
 		screensaver: configfileResults.screensaver,
@@ -147,6 +148,7 @@ function writeSettings(req, res, callback){
 		,musicpath : req.body.musiclocation
 		,tvpath : req.body.tvlocation
 		,language : req.body.language
+		,database : req.body.database
 		,onscreenkeyboard: req.body.usekeyboard
 		,location: req.body.location
 		,screensaver: req.body.screensaver

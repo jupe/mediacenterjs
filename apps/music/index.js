@@ -13,9 +13,38 @@ var express = require('express')
 , Speaker = require('speaker')
 , mediascanner = require('./mediascanner');
 
-var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/mediacenterjs');
 
+
+var configfile = []
+,configfilepath = './configuration/setup.js'
+,configfile = fs.readFileSync(configfilepath)
+,configfileResults = JSON.parse(configfile);	
+
+var mongoose = require('mongoose');
+var DB = mongoose.connection;
+DB.on('connecting', function() {
+  console.log('connecting to MongoDB...');
+});
+DB.on('error', function(error) {
+  console.error('Error in MongoDb connection: ' + error);
+  mongoose.disconnect();
+});
+DB.on('connected', function() {
+  console.log('MongoDB connected!');
+});
+DB.once('open', function() {
+  console.log('MongoDB connection opened!');
+});
+DB.on('reconnected', function () {
+  console.log('MongoDB reconnected!');
+});
+DB.on('disconnected', function() {
+  console.log('MongoDB disconnected!');
+  mongoose.connect(dbURI, {server:{auto_reconnect:true}});
+});
+
+var dbURI = 'mongodb://'+configfileResults.database+'/mediacenterjs';
+mongoose.connect(dbURI, {server:{auto_reconnect:true}});
 var db = require('./mongoose/model.js')('music');
 
 //var speaker = new Speaker();
@@ -27,10 +56,6 @@ var encoder = new Encoder('entity');
 
 exports.engine = 'jade';
 
-var configfile = []
-,configfilepath = './configuration/setup.js'
-,configfile = fs.readFileSync(configfilepath)
-,configfileResults = JSON.parse(configfile);	
  
 // Choose your render engine. The default choice is JADE:  http://jade-lang.com/
 exports.engine = 'jade';
