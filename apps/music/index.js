@@ -37,6 +37,7 @@ exports.engine = 'jade';
 
 // Render the indexpage
 exports.index = function(req, res, next){	
+  console.log('index');
 	var dir = configfileResults.musicpath
 	, writePath = './public/music/data/musicindex.js'
 	, getDir = true
@@ -72,8 +73,19 @@ exports.index = function(req, res, next){
 	});*/
 };
 
+exports.distinct = function(req, res, next){
+	console.log('distinct');
+  db.distinct( req.params.path, {}, function(error, artists){
+    res.json(artists);
+  });
+}
+/*
 exports.album = function(req, res, next){
-	var incomingFile = req.body
+	console.log('album');
+  db.distinct( "album", {}, function(error, albums){
+    res.json(albums);
+  });
+  var incomingFile = req.body
 	, dir = configfileResults.musicpath+encoder.htmlDecode(incomingFile.album)+'/'
 	, writePath = './public/music/data/'+encoder.htmlEncode(incomingFile.album)+'/album.js'
 	, getDir = false
@@ -86,7 +98,7 @@ exports.album = function(req, res, next){
 		
 		res.send(musicfileResults);
 	});
-};
+};*/
 
 exports.track = function(req, res, next){
   db.findById( req.params.track, function(error, track){
@@ -125,6 +137,7 @@ exports.track = function(req, res, next){
 };
 
 exports.post = function(req, res, next){	
+  console.log('post..');
 	var incomingFile = req.body
 	, albumRequest = incomingFile.albumTitle
 	, albumTitle = null

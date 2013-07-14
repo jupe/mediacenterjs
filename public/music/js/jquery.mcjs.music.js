@@ -115,21 +115,28 @@
 				, offsetBottom = offsetTop + $(this).height();
 
 				if(!$(this).attr("loaded") && WindowTop <= offsetBottom && WindowBottom >= offsetTop){
-					var title = $(this).find('.title').html()
+					var thumb = $(this).find('.title').attr('thumb')
 					, cover = $(this).find('.cover')
 					, album = $(this);
-					_handleMusic(title, cover, album);
+					_handleMusic(album, cover, thumb);
 					$(this).attr("loaded",true);
 				}
 			});		
 		},500);	
 	}
 	
-	function _handleMusic(title, cover, album){
-		$.ajax({
-			url: '/music/post/', 
-			type: 'post',
-			data: {albumTitle : title}
+	function _handleMusic(album, cover, thumb){
+		cover.attr('src','');	
+    album.fadeIn();
+    if( thumb.length>0){
+      
+      setTimeout(function(){
+        cover.attr('src',thumb).addClass('coverfound');
+      },500);
+    }
+    /*$.ajax({
+			url: thumb, 
+			type: 'get'
 		}).done(function(data){
 			if (data == 'bad dir'){
 				_handleMusic(title, cover, album)
@@ -141,7 +148,7 @@
 					cover.attr('src',albumData[0].thumb).addClass('coverfound');
 				},500);
 			}
-		});
+		});*/
 	}
 	
 	function _focusedItem(){
@@ -295,9 +302,10 @@
 		if (nextTrack !== undefined){
 			_playTrack(track,random)
 		}else{
-			return
+			return;
 		}
-	}
+	});
+  }
 	
 	function _randomTrack(){
 	
