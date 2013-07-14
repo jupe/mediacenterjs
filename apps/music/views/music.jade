@@ -46,7 +46,7 @@ html(lang="en")
 							li
 								img(src="").cover
 								.overlay
-								a(href=item.href, class="title")=item.title
+								a(href='track/'+item._id, class="title")=item.title
 		#eq						
 		video#player.video-js.vjs-default-skin(controls, preload="metadata", width="100%", height="33", data-setup="{}") %
 			source(src="",type="audio/mp3")

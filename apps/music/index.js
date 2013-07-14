@@ -42,14 +42,20 @@ exports.index = function(req, res, next){
 	, getDir = true
 	, fileTypes = new RegExp("\.(mp3)","g");
   
-  console.log(req.params);
-  
   db.find( {}, function(error, docs){
-    res.render('music',{
-			music: docs,
-			selectedTheme: configfileResults.theme,
-			status:null
-		});
+    switch( req.params.format ) {
+      case('html'):
+      case(undefined):
+        res.render('music',{
+          music: docs,
+          selectedTheme: configfileResults.theme,
+          status:null
+        });
+        break;
+      case('json'):
+        res.json(docs);
+        break;
+    }
   });
   
   /*
@@ -87,22 +93,31 @@ exports.track = function(req, res, next){
     if( error ) {
       res.send(500, error);
     } else if( track ) {
-      console.log('Streaming track:',track.title);
-      var stat = fs.statSync(configfileResults.musicpath+track.href)
-      var stream = fs.createReadStream(configfileResults.musicpath+track.href);
-      if( req.params.output === 'server' ) {
-        stream.pipe(lameDecoder)
-        .on('format', console.log)
-        .pipe(speaker);
-        res.json({});
-      } else {
-        res.writeHead(200, {
-          'Content-Type':'audio/mp3',
-          'Content-Length':stat.size
-        });
-        stream.pipe(res);
+      var stat = fs.statSync(configfileResults.musicpath+track.href);
+      switch( req.params.output ) {
+        case('json'):
+          res.json(track);
+          break;
+        case('client'):
+        case(undefined):
+        case('server'):
+          console.log('Streaming track:',track.title);
+          
+          var stream = fs.createReadStream(configfileResults.musicpath+track.href);
+          if( req.params.output === 'server' ) {
+            stream.pipe(lameDecoder)
+            .on('format', console.log)
+            .pipe(speaker);
+            res.json({});
+          } else {
+            res.writeHead(200, {
+              'Content-Type':'audio/mp3',
+              'Content-Length':stat.size
+            });
+            stream.pipe(res);
+          }
+          break;
       }
-      
     } else { 
       res.send(404);
     }
