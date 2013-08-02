@@ -1,3 +1,4 @@
+succesMessage = Opdracht succesvol uitgevoerd
 weather_cloudy = bewolkt
 weather_sunny = zonnig
 weather_rain = regen
@@ -7,3 +8,4 @@ weather_snow = sneeuw
 weather_storm = storm
 feelsLike = Gevoelstemperatuur
 error_weather =  Kies een grotere stad.
+confirmMessage = Weet u zeker dat u dit wilt doen? Dit kan niet ongedaan worden gemaakt.

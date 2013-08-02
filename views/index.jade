@@ -5,20 +5,27 @@ html(lang="en")
 		
 		// Core inclusion
 		link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Open+Sans')
+		
 		link(rel='stylesheet', href='/core/css/style.css')
+		link(rel='stylesheet', href='/core/css/jquery-ui-1.10.3.custom.min.css')
+		link(rel='stylesheet', href='/themes/'+selectedTheme)
+		
 		script(src="/core/js/jquery-1.8.2.min.js")
+		script(src="/core/js/jquery-ui-1.10.3.min.js")
+		
 		script(src="/core/js/plugins/jquery.idle-timer.js")
+		script(src="/core/js/plugins/jquery.i18n.properties.-1.0.9.js")
 		script(src="/core/js/jquery.mcjs.core.js")
 		
-		script
+		script.
 			$(function() {
 				var index = 0;
 				var length = $("ul").children().length;
 				var delays = [
-						200,
-						100,
-						200,
-						100
+					200,
+					100,
+					200,
+					100
 				];
 				
 				function delayNext()
@@ -35,10 +42,7 @@ html(lang="en")
 				}
 				
 				delayNext();
-			});
 
-		script
-			$(document).ready(function(){
 				$('body').mcjs();
 			});
 		
@@ -48,18 +52,17 @@ html(lang="en")
 		#header
 			img.logo(src="/core/css/img/logo.png")
 			h1 MediacenterJS
-			.settingslink
-				a(href="/settings") #{lingua.settings}
 			#dateandtime
 				.time=time
 				.date=date	
 		#wrapper
 			ul#tiles
 				each item in apps
-					li.tile
+					li.tile.boxed
 						a(href="/"+item)
 							img(src="/"+item+"/tile.png")
 						.info
-							.remove
-								img(src="/core/css/img/remove.png") 
-								a(href="/"+item) Remove
+							- if(item !== 'movies' && item !== 'music' && item !== 'weather' && item !== 'tv' && item !== 'settings')
+								.remove
+									img(src="/core/css/img/remove.png") 
+									a(href=item) Remove

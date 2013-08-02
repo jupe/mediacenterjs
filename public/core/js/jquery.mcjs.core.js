@@ -20,7 +20,22 @@
 (function($){
 
 	var ns = 'mcjs'
-	,methods = {}
+    ,methods = {
+		/**
+			This public function allows you to use a modal dialog 
+			with a ajax call with a generic conformation message
+			@param url 			AJAX url	(ie '/setup')
+			@param data			AJAX data	(ie {module : moduleLink})
+			@param type 		AJAX type  	(ie  'post' or 'get')
+		*/
+		modalDialog : function modalDialog(url, type,data) {
+			return this.each(function() {
+				var o = $.data(this, ns);
+				_modalDialog(o, url, type,data)
+			});
+		}
+		
+    }
 
 	function _init(options) {
 
@@ -34,31 +49,67 @@
 				$that: $that
 				,viewportWidth	: $(window).width()
 				,viewportHeight	: $(window).height()
+				,confirmMessage : undefined
+				,succesMessage : undefined
 			});
 			
 			// use extend(), so no o is used by value, not by reference
 			$.data(this, ns, $.extend(true, {}, o));
-	
+			
+			_initpages(o, $(this))
 			_resizeviewport(o, $(this)); 	// Strech bg to fullscreen
 			_keyevents(o,$(this)); 			// init keys
 			_screensaver(o, $(this));
-			
-			if(o.debug == false){
-				$(document).bind("contextmenu", function(e) {
-					return false;
-				});
-			}
-			
-			_initpages(o, $(this))
+
+			$('a.cachelink').click(function(e){
+				e.preventDefault();
+				var cacheLink = $(this).attr('data-cachelink')
+				, data = {cache : cacheLink}
+				, url = '/clearCache'
+				, type = 'post';
+				_modalDialog(o, url, type,data)
+			});
+		
+			$('.remove').click(function(e){
+				e.preventDefault();
+				var moduleLink = $(this).find('a').attr('href')
+				, data = {module : moduleLink}
+				, url = '/removeModule'
+				, type = 'post';				
+				_modalDialog(o, url, type,data)
+			});
 		});
 	}
 	
 	/**** Start of custom functions ***/
 	
 	function _initpages(o, $that){
-		$(".backdropimg").addClass("fadein");
+		// Setup frontend validation
+		$.ajax({
+			url: '/configuration/', 
+			type: 'get'
+		}).done(function(data){
+			$.i18n.properties({
+				name: 'frontend-translation', 
+				path:'/translations/', 
+				mode:'map',
+				language: data.language,
+				extension: 'js',
+				loadBaseFile: false ,
+				callback: function() {
+					o.confirmMessage = $.i18n.prop('confirmMessage')
+					o.succesMessage = $.i18n.prop('succesMessage')
+				}
+			})
+		});
 	
-		// If stated in config and if the plugin is present, add a onscreen keyboard
+		// Hide all ui boxes
+		$(".ui-widget").hide();
+		
+		// Add fade effect
+		$(".backdropimg").addClass("fadein");
+		
+		// Init Keyboard
 		if(jQuery().keyboard) {
 			if ( o.usekeyboard == 'yes' ){
 				$('.keyboard').keyboard();
@@ -66,7 +117,38 @@
 		}	
 	}
 	
-	// Resize background image according to viewport if the image has class fullscreen
+	function _modalDialog(o, url, type, data){
+		var dialog = null
+		dialog = $('<div>' + o.confirmMessage + '</div>').dialog({
+			resizable: false,
+			modal: true,
+			buttons: [{
+				text: "Ok",
+				click: function () {
+					dialog.dialog('destroy').remove();
+					$.ajax({
+						url: url, 
+						type: type,
+						data: data
+					}).done(function(data){
+						if(data == 'done'){
+							$(".ui-widget").find('.message').html(o.succesMessage);
+							$(".ui-widget").show();
+						} 
+					});
+				},
+
+			}, {
+				text: "Cancel",
+				click: function () {
+					dialog.dialog('destroy').remove();
+				},
+			}]
+		});
+		dialog.dialog('open');
+	}
+	
+	
 	function _resizeviewport(o, $that){
 		var $img = $(".fullscreen");
 		$(window).resize(function() {
@@ -99,28 +181,16 @@
 			if (typeof e == 'undefined' && window.event) { e = window.event; }
 			
 			switch(e.keyCode) {
-				case 40 : //down
+				case 39 : //next
 					focused.removeClass('focused').next().addClass('focused');
 					if (focused.next().length == 0) {
 						item.eq(0).addClass('focused')
 					}
 				break;
-				case 38 : //up
+				case 37 : //prev
 					focused.removeClass('focused').prev().addClass('focused');
 					if (item.prev().length == 0) {
 						item.eq(-1).addClass('focused')
-					}
-				break;
-				case 37 : //left
-					subitemFocused.removeClass('focused').prev().addClass('focused');
-					if (subitemFocused.prev().length == 0) {
-						subitem.eq(-1).addClass('focused')
-					}
-				break;
-				case 39 : //right
-					subitemFocused.removeClass('focused').next().addClass('focused');
-					if (subitemFocused.next().length == 0) {
-						subitem.eq(0).addClass('focused')
 					}
 				break;
 				case 13 : //enter
@@ -148,8 +218,6 @@
 		});
 	}
 	
-	
-	// Set idletimer for movieplayer to switch to fullscreen. Needs plugin - jquery.idletimer.js
 	function _screensaver(o, $that){
 		$.ajax({
 			url: '/configuration/', 

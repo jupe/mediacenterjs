@@ -1,7 +1,7 @@
 MediacenterJS
 =============
 
-__A NodeJS based Mediacenter__
+__A NodeJS based Mediacenter__ ![dependencies] (screenshots/dependencies.png)
 
 Website: http://www.mediacenterjs.com
 
@@ -14,11 +14,7 @@ Screenshots (Pre-Alpha GUI):
 
 ![Player] (screenshots/player.png)
 
-![Music] (screenshots/music.png)
-
-![Music_player] (screenshots/music_player.png)
-
-![Weather] (screenshots/weather.png)
+More screenshots in the screenshot folder.
 
 Status: 
 =======
@@ -28,12 +24,23 @@ __Heavy work in progress, pre-alpha, not ready for use__
 Changelog 
 =================
 
-__version 0.013 (Small fixes)__
+__version 0.021(Spotify works)__
 
-- Better music thumbnail quality
-- Improved/cleaned up code for music, tv and movies
-- Improved loading of music content
-- Continued work on Spotify app 
+- Basic spotify playback is working now. You can add your credentials in the settings menu and tracks will play directly through the speakers.
+  Playback controls and song information will be inplemented later.
+
+__version 0.020(INI)__
+
+- Config is stored in INI file
+- Updated all the modules
+- Fixed Jade warnings
+- Added Spotify credentials to settings
+
+__version 0.019(Music player & Settings)__
+
+- Music is now seekable!
+- Added settings as an 'app' instead of a seperate link to improve keyboard accessibility.
+- Fixed undefined error when playing music
 
 Why use it (once it is ready)?
 ===========
@@ -61,26 +68,25 @@ What currently works?
 * Retrieving of tv show information
 * Basic screensaver
 * lazy loading of movie and music items
-* Automatically loading of location if available during setup
 
 What's coming up
 =================
 
-* Handling of tv shows
-* Better movie transcoding handling
-* Subtitle support
+* Database integration
+* More RESTfull interface
 
-Known issues
+Known issues (Updated)
 ==================
-* Music duration is not passed on to the client
 * Movie Buffer size needs tweaking
-* Subfolder support does not work yet
-
+* Subfolder support is laking (App setup needs to be more RESTfull)
+* Music and videos need to be based on arrays/DB entries instead of the current DOM dependencies
+* Database support needs to be implemented
+* Current Movie encoding setup is not crossdevice (currently based on flash because WebM has a bug, not parsing the duration)
 
 What still needs to be done
 ==================
 
-* The rest...
+* Full progress and todo list: https://trello.com/b/czjyYsFi/mediacenterjs
 
 What's the MCJS?
 =========================
@@ -111,22 +117,18 @@ A complete documentation will be available when the project reaches Beta status.
 Setup
 -------------
 
-Download this appication with npm:
+Download this application with NPM:
 
-	npm install mediacenterjs
+[![NPM](https://nodei.co/npm/mediacenterjs.png?downloads=true)](https://nodei.co/npm/mediacenterjs/)
 
-Or download it directly from github of course. 
+Or download it directly from Github of course. 
 
 After you have downloaded MediacenterJS, click on the .bat file (in Windows) to start the project. 
-(make sure nodemon is properly installed. if not go to the directory of MediacenterJS in the terminal/command prompt and typ npm install nodemon ) 
-
 Or browsed to the root directory of MediaCenterJS in the terminal/command prompt and type:
 
-	node index
+	node server
 
 If you close this window, MCJS will stop working. You can also see useful information about what the server is doing, including error messages and other useful information.
-
-![Browse] (screenshots/browse_example.jpg)
 
 __Please make sure you've installed NodeJS and FFmpeg first!__
 
@@ -139,14 +141,66 @@ Install NodeJS: http://nodejs.org/download/
 The program will boot in setup mode, being accessible on localhost:3000 or 'IP of the server':3000.
 
 
-Run MediacenterJS
--------------
-After the initial setup has been completed, restart the server. MediacenterJS will be available on the port you have specified and the language you have chosen.
-If you don't want to restart the server every time you make a change in the settings, use nodemon to run the application with the following command:
+Setup issues
+-----------------
 
-	nodemon -w configuration index.js 
+**Windows and node-gyp**
+
+When you download this application through git (Either through zip or a GIT clone) It's possible you will get an error when trying to start the application.
+This is due to the fact that some modules have dependencies that need to be installed. So you need to run the install again. 
+
+	npm install lame 
+	or/and
+	npm install sqlite3
 	
-If you are new to nodemon, it might be needed to restart you command prompt or shell before being able to use nodemon properly.	
+If you run Windows it's likely this install will fail. Especially on a x64 machine because to install the dependencies, NPM uses a module called node-gyp.
+Which, in it's turn has dependencies as well. You need to install the following:
+
+Windows 32 bits needs Microsoft Visual Studio C++ 2010 Express. Download here: (http://go.microsoft.com/?linkid=9709949)
+
+Windows (7/8) 64 bits needs Microsoft Windows SDK 7.1 which includes visual studio. Download here: (http://www.microsoft.com/en-us/download/details.aspx?id=8279)
+	
+If you continue to have trouble installing the modules, Please read the documentation: (https://github.com/TooTallNate/node-gyp)
+
+**I Already have visual studio installed but it's a different version than 2010**
+
+An example of installing lame with visual studio 2012 on Windows:
+
+	npm install lame --msvs_version=2012
+	
+	
+**Version mismatch**
+
+If you get the following message:
+
+	Error: Module version mismatch. Expected 11, got 1.
+	
+You are running a different version of nodeJs then a certain module expects. You simply need to reinstall the module giving the error.
+for example:
+
+	Error: Module version mismatch. Expected 11, got 1.
+	    at Module.load (module.js:356:32)
+	    at Function.Module._load (module.js:312:12)
+	    at Module.require (module.js:364:17)
+	    at require (module.js:380:17)
+	    at bindings (C:\Users\Jan\Documents\GitHub\mediacenterjs\node_modules\lame\node_modules\bindings\bindings.js:76:44)
+	    at Object.<anonymous> (C:\Users\Jan\Documents\GitHub\mediacenterjs\node_modules\lame\lib\bindings.js:1:99)
+	    at Module._compile (module.js:456:26)
+	    at Object.Module._extensions..js (module.js:474:10)
+	    at Module.load (module.js:356:32)
+	    at Function.Module._load (module.js:312:12
+
+Indicates that the module Lame is generating the error. so simply type the following to reinstall the module:
+
+	npm install lame
+	
+
+Running MediacenterJS
+-------------
+After the initial setup has been completed MediacenterJS will be available on the port you have specified and the language you have chosen.
+the server.js will make sure you do not have to restart the actual application (index.js) every time the configuration file changes.
+
+Of course, if you change the port, you need to use that port after the initial setup.
 	
 What can the movie browser/player do? 
 -------------
@@ -155,8 +209,7 @@ Once you specify the location of your movies, the movie browser can get all the 
 Once you browse your movie collection, the system will download all the information and store it locally. This means that the building of the movie list index only takes a couple of milliseconds.
 After that the only slight loading time the system has, is when a movie is requested for the first time (because the data has to be downloaded).
 
-When a playback is requested, the server transcodes the movie to the webm open standard so the html5 player can play the movie in the browser.
-
+When a playback is requested, the server transcodes the movie so the HTML5 player can play the movie in the browser.
 
 
 How should I format my movie library and files?
@@ -239,6 +292,7 @@ If we look at the hello world example, you will see the following contents
 	
 * The render engine is the way the view is written down. Currently only JADE is supported.
 * The exports.index is the initial route to the app. And in this case will render the hello.jade file in the views folder.
+* The 'index' is the key used by the routing to assign te proper handeling. Another example is 'post'.
 
 __The public part of an App / Making it public__
 
@@ -247,9 +301,25 @@ If you want your app to show up in the dashboard, all you need to do is add a ti
 
 So in theory, you can make a background app that hooks on an existing app, or just runs in the background, without having it showing up in the dashboard simply by not adding the tile.
 
-__route.js (Still WIP)__ 
+__route.js__ 
 
-You can extend the basic routing table with your own custom routes by adding them in this file.
+You can extend the basic routing table with your own custom routes by adding this JSON file and defining your routes. 
+The 'NAME' will be replaced with the app name (folder name). You do not have to hard code it. But you can also add route outside your app namespace. For Example:
+
+	{
+		"track": [{
+			"method": "get",
+			"path": "/NAME/track/:album/:track"
+		}],
+		"album": [{
+			"method":"post",
+			"path": "/NAME/album"
+		}],
+		"lookup": [{
+			"method":"get",
+			"path": "/configuration"
+		}]
+	}
 	
 __Building an App__
 
@@ -281,7 +351,6 @@ This app also makes use of the following modules:
 * lingua
 * node-ffprobe
 * node-html-encoder
-* nodemon
 * redis
 * request
 * require
@@ -289,9 +358,10 @@ This app also makes use of the following modules:
 * feedparser
 * util
 * trakt
-* geoip-lite
 * spotify
 * colors
+* lame
+* sqlite3
 
 
 What is the beta version going to have?

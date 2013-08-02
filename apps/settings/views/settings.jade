@@ -1,0 +1,116 @@
+doctype 5
+html(lang="en")
+	head
+		title MediacenterJS - Settings
+		link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Open+Sans')
+		link(rel='stylesheet', href='/core/css/style.css')
+		link(rel='stylesheet', href='/core/css/jquery-ui-1.10.3.custom.min.css') 
+		link(rel='stylesheet', href='/themes/'+selectedTheme)
+		
+		script(src="/core/js/jquery-1.8.2.min.js")
+		script(src="/core/js/jquery-ui-1.10.3.min.js")
+		
+		script(src="/core/js/plugins/jquery.idle-timer.js")
+		script(src="/core/js/plugins/jquery.i18n.properties.-1.0.9.js")
+		script(src="/core/js/jquery.mcjs.core.js")
+		
+		script(src="/core/js/plugins/jquery.prettyForm.js")
+		script(src="/core/js/plugins/jquery.keyboard.min.js")
+		
+		script(src="/core/js/plugins/validation/jquery.validate.min.js")
+		script(src="/core/js/plugins/validation/jquery.validate.defaults.js")
+		script(src="/core/js/plugins/validation/jquery.validate.rules.js")
+		
+		script.
+			$(function() {
+				$('body').mcjs();
+				$('.validate-form').validate();
+				$("[type=checkbox], [type=radio]").prettyForm();
+				
+				var usekeyboard= $('#hiddenSetting').find('p').html();
+				if ( usekeyboard == 'yes' ){
+					$('.keyboard').keyboard();
+				}
+				
+				$('#theme').find('option').each(function(){
+					var cleanedThemeName = $(this).html().replace(/\.(css)/i,"");
+					$(this).text(cleanedThemeName)
+				});
+				
+			});
+	body
+		#hiddenSetting
+			p= onscreenkeyboard
+		#header.settings
+			a.backlink(href="/") 
+				img(src="/core/icons/back.png")
+			h1  #{lingua.settings}		
+		#wrapper
+		
+			.ui-widget
+				.ui-state-highlight.ui-corner-all
+					span.ui-icon.ui-icon-alert
+					.message 
+			.row
+				a.btn.cachelink(href="",data-cachelink="movies") #{lingua.settings_clear_cache_movies}
+				a.btn.cachelink(href="",data-cachelink="music") #{lingua.settings_clear_cache_music}
+				a.btn.cachelink(href="",data-cachelink="tv") #{lingua.settings_clear_cache_tv}
+			#settings
+				form#setup.validate-form(action='/submit',method='post')
+					.row
+						label #{lingua.setting_movielocation}
+						input.keyboard(name="movielocation",type="text",placeholder="C:/temp/ or /mnt/media/hdd/movies/", value= movielocation, data-rule-required="true", data-rule-path="true",  data-msg-path="Specify a valid path. Please end with a slash.")
+					.row
+						label #{lingua.setting_musiclocation}
+						input.keyboard(name="musiclocation",type="text",placeholder="C:/temp/ or /mnt/media/hdd/music/", value= musiclocation, data-rule-required="true", data-rule-path="true",  data-msg-path="Specify a valid path. Please end with a slash.")	
+					.row
+						label #{lingua.setting_tvlocation}
+						input.keyboard(name="tvlocation",type="text",placeholder="C:/temp/ or /mnt/media/hdd/movies/", value= tvlocation, data-rule-required="true", data-rule-path="true",  data-msg-path="Specify a valid path. Please end with a slash.")
+					.row
+						span.label #{lingua.setting_screensaver}
+						.checkgroup
+							- if(screensaver === 'dim')
+								input#dimYes(name="screensaver",type="radio",value="dim",checked) 
+								label(for="dimYes") #{lingua.setting_yes}
+								input#dimNo(name="screensaver",type="radio",value="off") 
+								label(for="dimNo") #{lingua.setting_no}
+							- else 
+								input#dimYes(name="screensaver",type="radio",value="dim") 
+								label(for="dimYes") #{lingua.setting_yes}
+								input#dimNo(name="screensaver",type="radio",value="off",checked) 
+								label(for="dimNo") #{lingua.setting_no}
+					.row
+						span.label #{lingua.setting_keyboard}
+						.checkgroup
+							- if(onscreenkeyboard === 'yes')
+								input#yeskeyboard(name="usekeyboard",type="radio",value="yes",checked) 
+								label(for="yeskeyboard") #{lingua.setting_yes}
+								input#nokeyboard(name="usekeyboard",type="radio",value="no") 
+								label(for="nokeyboard") #{lingua.setting_no}
+							- else
+								input#yeskeyboard(name="usekeyboard",type="radio",value="yes") 
+								label(for="yeskeyboard") #{lingua.setting_yes}
+								input#nokeyboard(name="usekeyboard",type="radio",value="no",checked) 
+								label(for="nokeyboard") #{lingua.setting_no}
+					.row
+						label #{lingua.setting_language}
+						input.keyboard(name="language",type="text",placeholder="ie nl or gb", value= language ,data-rule-required="true", data-rule-language="true", data-msg-language="Only NL and EN are currently supported")
+					.row
+						label #{lingua.setting_location}
+						input.keyboard(name="location",type="text",placeholder="ie london or amsterdam", value= location,data-rule-required="true")					
+					.row
+						label Spotify Username
+						input.keyboard(name="spotifyUser",type="text", value=spotifyUser)					
+					.row
+						label Spotify Password
+						input.keyboard(name="spotifyPass",type="password", value=spotifyPass)	
+					.row
+						label #{lingua.setting_theme}
+						select#theme(name="theme")
+							- for theme in themes
+								option(selected=theme) #{theme}
+					.row
+						label #{lingua.setting_port}
+						input.keyboard(name="port",type="text",placeholder="ie 3000 or 1337", value= port ,data-rule-required="true")
+					.row
+						input(type="submit",value="#{lingua.setting_submit}")	

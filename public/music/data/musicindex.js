@@ -1,7 +1,12 @@
 [
-    "01 - Giorgio Moroder - Output - Brooklyn - N.Y.C.mp3",
+    "Anamanaguchi - Power Supply",
+    "Depeche Mode - Violator",
     "Disclosure - Settle",
-    "Madeon - Essential Mix (Live from Hull) (BBC Radio1) 01-28-2012 www.edmtunes.com.mp3",
     "Queens Of The Stone Age ...Like Clockwork",
-    "Rudimental - Home"
+    "Rudimental - Home",
+    "Skrillex - BBC Radio 1 Essential Mix.mp3",
+    "Sound City - Real to Reel",
+    "Stone Sour - House Of Gold & Bones Part 2",
+    "Tenacious D - Tenacious D",
+    "The Strokes - Comedown Machine"
 ]

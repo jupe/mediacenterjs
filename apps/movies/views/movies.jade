@@ -5,14 +5,20 @@ html(lang="en")
 		
 		// Core inclusion
 		link(rel='stylesheet', href='/core/css/style.css')
+		link(rel='stylesheet', href='/core/css/jquery-ui-1.10.3.custom.min.css')
+		link(rel='stylesheet', href='/themes/'+selectedTheme)
+		
 		script(src="/core/js/jquery-1.8.2.min.js")
+		script(src="/core/js/jquery-ui-1.10.3.min.js")
+		
 		script(src="/core/js/plugins/jquery.idle-timer.js")
+		script(src="/core/js/plugins/jquery.i18n.properties.-1.0.9.js")
 		script(src="/core/js/jquery.mcjs.core.js")
 		
 		// App specific
 		link(href="http://vjs.zencdn.net/4.0/video-js.css", rel="stylesheet")
 		script(src="http://vjs.zencdn.net/4.0/video.js")
-		style(type="text/css")
+		style.
 			.vjs-play-progress, .vjs-volume-level { background-color: #d96800!important; }
 			.vjs-control-bar, .vjs-big-play-button { background: rgba(171,171,171,0.7)!important; }
 			.vjs-slider { background: rgba(171,171,171,0.2333333333333333)!important; }
@@ -20,8 +26,8 @@ html(lang="en")
 		link(rel='stylesheet', href='/movies/css/style.css')
 		script(src="/movies/js/jquery.mcjs.movies.js")
 
-		script
-			$(document).ready(function(){
+		script.
+			$(function(){
 				//$('.movies').jScrollPane();
 				$('body').mcjs();
 				$('body').mcjsm();	
@@ -36,13 +42,10 @@ html(lang="en")
 			h1 #{lingua.movies}		
 		#wrapper
 			#moviebrowser
-				if status !== null
-					p.gui= status
-				else
 					ul.movies
 						each movie in movies
-							li.movieposter 
-								img(src="").movieposter
+							li.movieposter.boxed
+								img(src="/core/css/img/ajax-loader.gif").movieposter
 								.overlay(data-movie= movie)							
 								span.title= movie		
 								.overview

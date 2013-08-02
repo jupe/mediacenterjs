@@ -3,9 +3,14 @@ html(lang="en")
 	head
 		// Core inclusion
 		link(rel='stylesheet', href='/core/css/style.css')
+		link(rel='stylesheet', href='/core/css/jquery-ui-1.10.3.custom.min.css')
+		link(rel='stylesheet', href='/themes/'+selectedTheme)
+		
 		script(src="/core/js/jquery-1.8.2.min.js")
-		script(src="/core/js/plugins/jquery.i18n.properties.-1.0.9.js")
+		script(src="/core/js/jquery-ui-1.10.3.min.js")
+		
 		script(src="/core/js/plugins/jquery.idle-timer.js")
+		script(src="/core/js/plugins/jquery.i18n.properties.-1.0.9.js")
 		script(src="/core/js/jquery.mcjs.core.js")
 		
 		// App specific
@@ -13,8 +18,8 @@ html(lang="en")
 		link(rel='stylesheet', href='/weather/css/style.css')
 		
 		title #{lingua.weather}
-		script
-			$(document).ready(function(){
+		script.
+			$(function(){
 				$('body').mcjs();
 				$('body').mcjsw();
 			});

@@ -21,22 +21,19 @@ var express = require('express')
 , fs = require ('fs')
 , dateFormat = require('dateformat')
 , lingua = require('lingua')
-, geoip = require('geoip-lite')
-, colors = require('colors');
+, colors = require('colors')
+, rimraf = require('rimraf')
+, ini = require('ini')
+, config = ini.parse(fs.readFileSync('./configuration/config.ini', 'utf-8'));	
 
-
-var configfile = []
-,configfilepath = './configuration/setup.js'
-,configfile = fs.readFileSync(configfilepath)
-,configfileResults = JSON.parse(configfile);	
-
-var language = null
-console.log(configfileResults.language)
-if(configfileResults.language === ""){
-	language = 'en'
+var language = null;
+if(config.language === ""){
+	language = 'en';
 } else {
-	language = configfileResults.language
+	language = config.language;
 }
+
+process.env.NODE_ENV = 'development';
 
 app.configure(function(){
 	app.set('view engine', 'jade');
@@ -71,19 +68,8 @@ app.configure('production', function(){
 
 require('./lib/routing')(app,{ verbose: !module.parent });
 app.get("/", function(req, res, next) {  
-	if(	configfileResults.moviepath == '' && configfileResults.language == '' && configfileResults.location == '' || configfileResults.moviepath == null || configfileResults.moviepath == undefined){
-	
-		var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-		, locationFound = 'unknown';
-		
-		if( ip !== '127.0.0.1'){
-			var geo = geoip.lookup(ip);
-			if(geo !== null) locationFound = geo.city
-		} 
-		res.render('setup',{
-			location: locationFound
-		});	
-
+	if(	config.moviepath == '' && config.language == '' && config.location == '' || config.moviepath == null || config.moviepath == undefined){
+		res.render('setup');	
 	} else {
 		var apps = []
 		//Search app folder for apps and check if tile icon is present
@@ -98,6 +84,7 @@ app.get("/", function(req, res, next) {
 		req.setMaxListeners(0)
 		res.render('index', {
 			title: 'Homepage',
+			selectedTheme: config.theme,
 			time: time,
 			date: date,
 			apps: apps
@@ -105,23 +92,50 @@ app.get("/", function(req, res, next) {
 	}
 });
 
-//	Handle settings. Because this is done in one place,
-//	keep it in the initial app.js file. 
-//	TODO: Add extend to settings from app
+app.use(function(req, res) {
+    res.status(404).render('404',{ selectedTheme: config.theme});
+});
 
-app.get("/settings", function(req, res, next) {  
-	res.render('settings',{
-		moviepath: configfileResults.moviepath,
-		musicpath : configfileResults.musicpath,
-		tvpath : configfileResults.tvpath,
-		highres: configfileResults.highres,
-		language: configfileResults.language,
-		onscreenkeyboard: configfileResults.onscreenkeyboard,
-		location: configfileResults.location,
-		screensaver: configfileResults.screensaver,
-		showdetails: configfileResults.showdetails,
-		port: configfileResults.port
-	});	
+app.post('/removeModule', function(req, res){
+	var incommingModule = req.body
+	, module = incommingModule.module
+	, appDir = './apps/'+module+'/'
+	, publicdir = './public/'+module+'/';
+	
+	rimraf(appDir, function (e){if(e)console.log('Error removing module', e .red)});
+	
+	rimraf(publicdir, function (e) { 
+		if(e) {
+			console.log('Error removing module', e .red);
+		} else {
+			res.redirect('/')
+		}
+	});
+});
+
+app.post('/clearCache', function(req, res){
+	var incommingCache = req.body
+	, cache = incommingCache.cache
+	, rmdir = './public/'+cache+'/data/';
+	
+	console.log('clearing '+cache+' cache');
+	
+	fs.readdir(rmdir,function(err,dirs){
+		dirs.forEach(function(dir){
+			var dataFolder = rmdir+dir
+			stats = fs.lstatSync(dataFolder);
+			if (stats.isDirectory()) {
+				rimraf(dataFolder, function (e) { 		
+					if(e){
+						console.log('Error removing module', e .red) 
+						res.send('Error clearing cache', e)
+					} else{
+						res.send('done')
+					};
+				});
+			};
+		});		
+	});
 });
 
 app.post('/setuppost', function(req, res){
@@ -131,7 +145,7 @@ app.post('/setuppost', function(req, res){
 });
 
 app.get('/configuration', function(req, res){
-	res.send(configfileResults)
+	res.send(config)
 });
 	
 app.post('/submit', function(req, res){
@@ -141,38 +155,39 @@ app.post('/submit', function(req, res){
 });
 
 function writeSettings(req, res, callback){
-	var myData = {
-		moviepath : req.body.movielocation
-		,highres: req.body.highres
-		,musicpath : req.body.musiclocation
-		,tvpath : req.body.tvlocation
-		,language : req.body.language
-		,onscreenkeyboard: req.body.usekeyboard
-		,location: req.body.location
-		,screensaver: req.body.screensaver
-		,showdetails: req.body.showdetails
-		,port: req.body.port
+	var incommingTheme = req.body.theme
+	if (incommingTheme.match(/\.(css)/)){
+		themeName = incommingTheme 
+	} else {
+		themeName = incommingTheme+'.css'
 	}
 	
-	fs.writeFile(configfilepath, JSON.stringify(myData, null, 4), function(e) {
-		if(e) {
-			res.send(500);
-			console.log('Error wrting settings',err .red);
-		} else {
-			setTimeout(function(){
-				callback();
-			},1000);			
-		}
-	}); 
+    config.moviepath = req.body.movielocation,
+	config.musicpath = req.body.musiclocation,
+	config.tvpath = req.body.tvlocation,
+	config.language = req.body.language,
+	config.onscreenkeyboard = req.body.usekeyboard,
+	config.location = req.body.location,
+	config.theme = themeName,	
+	config.screensaver = req.body.screensaver,
+	config.spotifyUser= req.body.spotifyUser,
+	config.spotifyPass = req.body.spotifyPass,
+	config.port = req.body.port
+	
+    fs.writeFile('./configuration/config.ini', ini.stringify(config), function(err){
+        if(err){
+            console.log('Error writing INI file.',err);  
+        } else{
+         res.redirect('/');
+        }
+    });
 }
 
 // Open App socket
-if (configfileResults.port == "" || configfileResults.port == undefined ){
-	console.log('Error parsing configfile, falling back to default port' .red)
+if (config.port == "" || config.port == undefined ){
+	console.log('First run, Setup running on localhost:3000' .yellow.bold)
 	app.listen(parseInt(3000));
 } else{
-	app.listen(parseInt(configfileResults.port));
+	console.log("MediacenterJS listening on port:", config.port .green.bold); 
+	app.listen(parseInt(config.port));
 }
-
-
-console.log("MediacenterJS listening on port:", configfileResults.port .green); 

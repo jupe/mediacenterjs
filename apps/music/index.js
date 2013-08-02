@@ -6,26 +6,24 @@ var express = require('express')
 , downloader = require('downloader')
 , rimraf = require('rimraf')
 , request = require("request")
+, lame = require('lame')
 , helper = require('../../lib/helpers.js')
 , Encoder = require('node-html-encoder').Encoder
-, colors = require('colors');
+, colors = require('colors')
+, ini = require('ini')
+, config = ini.parse(fs.readFileSync('./configuration/config.ini', 'utf-8'));
 
 // entity type encoder
 var encoder = new Encoder('entity');
 
 exports.engine = 'jade';
-
-var configfile = []
-,configfilepath = './configuration/setup.js'
-,configfile = fs.readFileSync(configfilepath)
-,configfileResults = JSON.parse(configfile);	
  
 // Choose your render engine. The default choice is JADE:  http://jade-lang.com/
 exports.engine = 'jade';
 
 // Render the indexpage
 exports.index = function(req, res, next){	
-	var dir = configfileResults.musicpath
+	var dir = config.musicpath
 	, writePath = './public/music/data/musicindex.js'
 	, getDir = true
 	, fileTypes = new RegExp("\.(mp3)","g");
@@ -38,6 +36,7 @@ exports.index = function(req, res, next){
 		
 		res.render('music',{
 			music: musicfileResults,
+			selectedTheme: config.theme,
 			status:status
 		});
 	});
@@ -45,37 +44,92 @@ exports.index = function(req, res, next){
 
 exports.album = function(req, res, next){
 	var incomingFile = req.body
-	, dir = configfileResults.musicpath+encoder.htmlDecode(incomingFile.album)+'/'
+	, dir = config.musicpath+encoder.htmlDecode(incomingFile.album)+'/'
 	, writePath = './public/music/data/'+encoder.htmlEncode(incomingFile.album)+'/album.js'
 	, getDir = false
 	, fileTypes = new RegExp("\.(mp3)","g");
 
-	helper.getLocalFiles(req, res, dir, writePath, getDir, fileTypes, function(status){
+	if (fs.existsSync(writePath)) {
 		var musicfiles = []
 		, musicfiles = fs.readFileSync(writePath)
-		, musicfileResults = JSON.parse(musicfiles)	
+		, musicfileResults = JSON.parse(musicfiles);
 		
-		res.send(musicfileResults);
-	});
+		fs.stat(writePath, function (err, stats) {		
+			if(stats.size == 0){
+				rimraf(writePath, function (e) {
+					if(e){
+						console.log('Removing dir error:', e .red)
+					} else{
+						helper.getLocalFiles(req, res, dir, writePath, getDir, fileTypes, function(err,status){
+							if(err){
+								console.log('error writing files to disk', err)
+							}else {
+								musicfiles = fs.readFileSync(writePath)
+								musicfileResults = JSON.parse(musicfiles);
+								
+								res.send(musicfileResults);
+							}
+						});					
+					}
+				});
+			} else {
+				res.send(musicfileResults);
+			}
+		});
+	} else {
+		helper.getLocalFiles(req, res, dir, writePath, getDir, fileTypes, function(err,status){
+			if(err){
+				console.log('error writing files to disk', err)
+			}else {
+				var musicfiles = []
+				, musicfiles = fs.readFileSync(writePath)
+				, musicfileResults = JSON.parse(musicfiles);
+				
+				res.send(musicfileResults);
+			}
+		});
+	}
+	
 };
 
 exports.track = function(req, res, next){
-	var decodeTrack = encoder.htmlDecode(req.params.track).replace(/\^/gi,"/")
+	var decodeTrack = encoder.htmlDecode(req.params.track)
+	, decodeAlbum = encoder.htmlDecode(req.params.album)
 	if (req.params.album === 'none'){
-		var track = configfileResults.musicpath+decodeTrack
-	}else { 
-		var track = configfileResults.musicpath+encoder.htmlDecode(req.params.album)+'/'+decodeTrack
+		var track = config.musicpath+decodeTrack
+	}else {
+		var track = config.musicpath+decodeAlbum+'/'+decodeTrack
 	}
-	
-	console.log('Streaming track:',track)
+
 	var stat = fs.statSync(track)
-	res.writeHead(200, {
+	, start = 0
+	, end = 0
+	, range = req.header('Range');
+
+	if (range != null) {
+	start = parseInt(range.slice(range.indexOf('bytes=')+6,
+		range.indexOf('-')));
+	end = parseInt(range.slice(range.indexOf('-')+1,
+		range.length));
+	}
+	if (isNaN(end) || end === 0) end = stat.size-1;
+	if (start > end) return;
+
+
+	res.writeHead(206, { // NOTE: a partial http response
+		'Connection':'close',
 		'Content-Type':'audio/mp3',
-		'Content-Length':stat.size
+		'Content-Length':end - start,
+		'Content-Range':'bytes '+start+'-'+end+'/'+stat.size,
+		'Transfer-Encoding':'chunked'
 	});
-	var stream = fs.createReadStream(track);
+
+	var stream = fs.createReadStream(track)
+	//.pipe(new lame.Decoder);
 	stream.pipe(res);
+	
 };
+
 
 exports.post = function(req, res, next){	
 	var incomingFile = req.body
@@ -107,10 +161,10 @@ exports.post = function(req, res, next){
 					var single = false
 					if (albumRequest !== undefined ){
 						if (albumRequest.match(/\.(mp3)/gi)){
-							var dir = configfileResults.musicpath;
+							var dir = config.musicpath;
 							single = true 
 						}else {
-							var dir = configfileResults.musicpath+encoder.htmlDecode(albumRequest)+'/';
+							var dir = config.musicpath+encoder.htmlDecode(albumRequest)+'/';
 							single = false 
 						}
 						fs.readdir(dir,function(err,files){
@@ -125,7 +179,7 @@ exports.post = function(req, res, next){
 										if (single == true){
 											var title = albumRequest.replace(/\.(mp3)/gi,"")
 											if (file.match(title,"g")){
-												var localDir = configfileResults.musicpath+file
+												var localDir = config.musicpath+file
 												copyImageFileToCache(localDir,albumRequest,file, function(){
 													writeData(title,thumb,year,genre);
 												});
@@ -141,10 +195,6 @@ exports.post = function(req, res, next){
 												writeData(title,thumb,year,genre);
 											});
 										} 
-									} else{
-										discogs(albumTitle, function(title,thumb,year,genre){
-											writeData(title,thumb,year,genre);
-										});
 									}
 								});
 								discogs(albumTitle, function(title,thumb,year,genre){
@@ -225,11 +275,8 @@ exports.post = function(req, res, next){
 			, downloadDir = './public/music/data/'+albumRequest+'/'
 			, cover = responseImage.replace(/-90-/,"-150-");
 			
-			console.log('cover', cover)
-			
-			downloader.on('done', function(msg) { console.log('done', msg); });
-			downloader.on('error', function(msg) { console.log('error', msg); });
 			downloader.download(cover, downloadDir);
+			downloader.on('error', function(msg) { console.log('error', msg); });
 			callback(cover);
 		};
 	

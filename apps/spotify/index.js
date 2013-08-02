@@ -18,7 +18,17 @@
 
 // Choose your render engine. The default choice is JADE:  http://jade-lang.com/
 exports.engine = 'jade';
-var spotify = require('spotify')
+
+// Modules
+var Spotify = require('spotify')
+, spotifyPlay = require('spotify-web')
+, lame = require('lame')
+, Speaker = require('speaker')
+, express = require('express')
+, app = express()
+, fs = require('fs')
+, ini = require('ini')
+, config = ini.parse(fs.readFileSync('./configuration/config.ini', 'utf-8'));
 
 // Render the indexpage
 exports.index = function(req, res, next){
@@ -36,12 +46,42 @@ exports.post = function(req, res, next){
 
 
 function findTrack(searchQuery, callback){
-	spotify.search({ type: 'track', query: searchQuery }, function(err, data) {
+	Spotify.search({ type: 'track', query: searchQuery }, function(err, data) {
 		if ( err ) {
 			console.log('Error occurred: ' + err);
 			return;
 		} else {
-			callback(data)
+			callback(data);
 		}
 	});
 }
+
+
+exports.play = function(req, res, next){
+	var uri = req.params.filename
+	, username = config.spotifyUser
+	, password = config.spotifyPass;
+
+	spotifyPlay.login(username, password, function (err, result) {
+		if (err) {
+			console.log('Spotify error',err);
+		} else {
+			result.get(uri, function (err, track) {
+				console.log('Playing: %s - %s', track.artist[0].name, track.name);
+
+				track.play()
+				.pipe(new lame.Decoder())
+				.pipe(new Speaker())
+				.on('finish', function () {
+					result.disconnect();
+				});
+			});
+		}
+	  });
+};
+
+
+
+
+
+
